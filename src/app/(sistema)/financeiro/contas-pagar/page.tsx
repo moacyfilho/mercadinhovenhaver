@@ -70,7 +70,7 @@ export default async function ContasPagarPage() {
                       <td className="px-4 py-3 text-right font-bold text-gray-800">{formatCurrency(a.amount)}</td>
                       <td className="px-4 py-3 text-xs text-gray-600">{formatDate(a.due_date)}</td>
                       <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
-                      <td className="px-4 py-3"><ContaPagarActions account={a} /></td>
+                      <td className="px-4 py-3"><ContaPagarActions account={a as any} /></td>
                     </tr>
                   ))}
                   {(accounts ?? []).length === 0 && (

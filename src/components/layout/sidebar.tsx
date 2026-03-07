@@ -4,9 +4,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
-  LayoutDashboard, ShoppingCart, Package, Users, Truck,
-  CreditCard, TrendingDown, TrendingUp, BarChart3,
-  Settings, DollarSign, ChevronRight, X
+  LayoutDashboard, ShoppingCart, Package, Users,
+  BarChart3, Settings, DollarSign, X
 } from 'lucide-react'
 
 const menu = [
@@ -45,14 +44,15 @@ const menu = [
 interface SidebarProps {
   open: boolean
   onClose: () => void
+  lowStockCount?: number
 }
 
-export function Sidebar({ open, onClose }: SidebarProps) {
+export function Sidebar({ open, onClose, lowStockCount = 0 }: SidebarProps) {
   const pathname = usePathname()
 
   return (
     <>
-      {/* Overlay mobile */}
+      {/* Overlay mobile (oculto no desktop) */}
       {open && (
         <div
           className="fixed inset-0 bg-black/50 z-20 lg:hidden"
@@ -61,8 +61,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       )}
 
       <aside className={cn(
-        'fixed top-0 left-0 h-full w-64 bg-green-900 text-white z-30 transition-transform duration-300 flex flex-col',
-        'lg:translate-x-0 lg:static lg:z-auto',
+        'fixed top-0 left-0 h-full w-64 bg-green-900 text-white z-30 transition-transform duration-300 flex flex-col print:hidden',
+        'lg:translate-x-0',
         open ? 'translate-x-0' : '-translate-x-full'
       )}>
         {/* Header */}
@@ -83,14 +83,17 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {menu.map((item, i) => {
             if (item.children) {
-              const isGroupActive = item.children.some(c => pathname.startsWith(c.href))
               return (
                 <div key={i}>
-                  <div className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-green-300 mt-2 mb-1',
-                  )}>
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-green-300 mt-2 mb-1">
                     <item.icon size={16} />
                     {item.label}
+                    {/* Badge estoque baixo no grupo Estoque */}
+                    {item.label === 'Estoque' && lowStockCount > 0 && (
+                      <span className="ml-auto bg-amber-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                        {lowStockCount}
+                      </span>
+                    )}
                   </div>
                   <div className="ml-4 space-y-1">
                     {item.children.map(child => (
@@ -133,6 +136,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             )
           })}
         </nav>
+
+        {/* Footer */}
+        <div className="p-3 border-t border-green-800">
+          <p className="text-green-500 text-xs text-center">v1.0 — Venha Ver Gestão</p>
+        </div>
       </aside>
     </>
   )

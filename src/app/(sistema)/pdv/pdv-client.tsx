@@ -89,7 +89,7 @@ export function PdvClient({ cashRegister: initialCashRegister, products, categor
     : products
 
   return (
-    <div className="fixed inset-0 bg-slate-100 flex overflow-hidden">
+    <div className="fixed bottom-0 top-16 left-0 right-0 lg:left-64 bg-slate-100 flex overflow-hidden">
       {/* Left - Catálogo */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header PDV */}
@@ -150,13 +150,18 @@ export function PdvClient({ cashRegister: initialCashRegister, products, categor
           ))}
         </div>
 
-        {/* Grid de produtos */}
-        <div className="flex-1 overflow-y-auto p-3">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-            {filteredProducts.map(p => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+        {/* Lista de produtos */}
+        <div className="flex-1 overflow-y-auto">
+          <table className="w-full text-sm">
+            <tbody className="divide-y divide-gray-100">
+              {filteredProducts.map(p => (
+                <ProductRow key={p.id} product={p} />
+              ))}
+              {filteredProducts.length === 0 && (
+                <tr><td colSpan={4} className="text-center py-10 text-gray-400">Nenhum produto encontrado</td></tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -233,21 +238,49 @@ export function PdvClient({ cashRegister: initialCashRegister, products, categor
   )
 }
 
-function ProductCard({ product }: { product: Product }) {
+function ProductRow({ product }: { product: Product }) {
   const { addItem } = usePdvStore()
   return (
-    <button
-      onClick={() => addItem(product)}
-      className="bg-white rounded-xl border border-gray-200 p-3 hover:border-green-400 hover:shadow-md transition-all text-left group"
+    <tr
+      onClick={() => product.stock_qty > 0 && addItem(product)}
+      className={
+        product.stock_qty <= 0
+          ? 'opacity-40 cursor-not-allowed bg-gray-50'
+          : 'hover:bg-green-50 cursor-pointer active:bg-green-100 transition-colors'
+      }
     >
-      <div className="w-full aspect-square bg-gray-50 rounded-lg mb-2 flex items-center justify-center text-2xl group-hover:bg-green-50 transition-colors">
-        🛒
-      </div>
-      <p className="text-xs font-medium text-gray-700 leading-tight line-clamp-2">{product.name}</p>
-      <p className="text-sm font-bold text-green-700 mt-1">{formatCurrency(product.sale_price)}</p>
-      {product.low_stock && (
-        <p className="text-xs text-amber-500 font-medium">⚠ Estoque baixo</p>
-      )}
-    </button>
+      {/* Nome + categoria */}
+      <td className="px-4 py-2.5">
+        <p className="font-medium text-gray-800 leading-tight">{product.name}</p>
+        {(product as any).category_name && (
+          <p className="text-xs text-gray-400">{(product as any).category_name}</p>
+        )}
+      </td>
+
+      {/* Estoque */}
+      <td className="px-3 py-2.5 text-xs whitespace-nowrap text-right">
+        {product.stock_qty <= 0 ? (
+          <span className="text-red-500 font-semibold">Sem estoque</span>
+        ) : product.low_stock ? (
+          <span className="text-amber-500 font-semibold">⚠️ {product.stock_qty} {product.unit}</span>
+        ) : (
+          <span className="text-gray-400">{product.stock_qty} {product.unit}</span>
+        )}
+      </td>
+
+      {/* Preço */}
+      <td className="px-4 py-2.5 text-right">
+        <span className="font-bold text-green-700 text-base">{formatCurrency(product.sale_price)}</span>
+      </td>
+
+      {/* Botão + */}
+      <td className="pr-3 py-2.5 text-right">
+        <span className={
+          product.stock_qty <= 0
+            ? 'w-8 h-8 inline-flex items-center justify-center rounded-lg text-gray-300 bg-gray-100 text-lg'
+            : 'w-8 h-8 inline-flex items-center justify-center rounded-lg bg-green-700 hover:bg-green-800 text-white text-lg font-bold transition-colors'
+        }>+</span>
+      </td>
+    </tr>
   )
 }

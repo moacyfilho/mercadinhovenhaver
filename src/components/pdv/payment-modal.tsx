@@ -109,6 +109,25 @@ export function PaymentModal({ open, onClose }: Props) {
       })
     }
 
+    // Atualizar totais do caixa
+    const { data: reg } = await supabase
+      .from('cash_registers')
+      .select('total_sales, cash_sales, pix_sales, debit_sales, credit_sales')
+      .eq('id', cashRegisterId)
+      .single()
+
+    if (reg) {
+      const saleTotal = total()
+      const updates: Record<string, number> = {
+        total_sales: ((reg as any).total_sales ?? 0) + saleTotal,
+      }
+      if (paymentMethod === 'dinheiro') updates.cash_sales = ((reg as any).cash_sales ?? 0) + saleTotal
+      else if (paymentMethod === 'pix') updates.pix_sales = ((reg as any).pix_sales ?? 0) + saleTotal
+      else if (paymentMethod === 'debito') updates.debit_sales = ((reg as any).debit_sales ?? 0) + saleTotal
+      else if (paymentMethod === 'credito') updates.credit_sales = ((reg as any).credit_sales ?? 0) + saleTotal
+      await supabase.from('cash_registers').update(updates).eq('id', cashRegisterId)
+    }
+
     toast.success(`Venda #${sale.sale_number} finalizada!`)
     clearCart()
     onClose()

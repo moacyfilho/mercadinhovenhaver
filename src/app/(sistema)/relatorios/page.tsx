@@ -1,228 +1,133 @@
-import { createClient } from '@/lib/supabase/server'
-import { PageHeader } from '@/components/shared/page-header'
-import { formatCurrency, paymentLabel } from '@/lib/utils'
-import { BarChart3, TrendingUp, DollarSign, Users } from 'lucide-react'
-import { startOfMonth, endOfMonth, format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { createClient } from "@/lib/supabase/server"
+import { startOfMonth, format } from "date-fns"
+import { RelatoriosClient } from "./relatorios-client"
 
-export default async function RelatoriosPage() {
+export default async function RelatoriosPage({
+  searchParams,
+}: {
+  searchParams: { tipo?: string; de?: string; ate?: string }
+}) {
   const supabase = await createClient()
-  const today = new Date()
-  const monthStart = startOfMonth(today).toISOString()
-  const monthEnd = endOfMonth(today).toISOString()
+  const hoje = new Date()
+  const tipo = searchParams.tipo ?? "vendas"
+  // Para financeiro o padrão é sem filtro de data (mostra tudo)
+  const de = searchParams.de ?? (tipo === "financeiro" ? "" : format(startOfMonth(hoje), "yyyy-MM-dd"))
+  const ate = searchParams.ate ?? (tipo === "financeiro" ? "" : format(hoje, "yyyy-MM-dd"))
 
-  // Vendas do mês por forma de pagamento
-  const { data: salesByPayment } = await supabase
-    .from('sales')
-    .select('payment_method, total, subtotal, discount')
-    .eq('status', 'finalizada')
-    .gte('created_at', monthStart)
-    .lte('created_at', monthEnd)
+  let vendasData = null
+  let financeiroData = null
+  let estoqueData = null
 
-  const byPayment = (salesByPayment ?? []).reduce((acc, s) => {
-    acc[s.payment_method] = (acc[s.payment_method] ?? 0) + s.total
-    return acc
-  }, {} as Record<string, number>)
+  if (tipo === "vendas") {
+    const deISO = de + "T00:00:00.000Z"
+    const ateISO = ate + "T23:59:59.999Z"
 
-  const totalMes = Object.values(byPayment).reduce((sum, v) => sum + v, 0)
-  const totalDesconto = (salesByPayment ?? []).reduce((sum, s) => sum + s.discount, 0)
+    const [{ data: salesRaw }, { data: itemsRaw }] = await Promise.all([
+      supabase
+        .from("sales")
+        .select("payment_method, total, discount, created_at")
+        .eq("status", "finalizada")
+        .gte("created_at", deISO)
+        .lte("created_at", ateISO),
+      supabase
+        .from("sale_items")
+        .select("product_name, quantity, subtotal, cost_price")
+        .gte("created_at", deISO)
+        .lte("created_at", ateISO),
+    ])
 
-  // Top produtos do mês
-  const { data: topItems } = await supabase
-    .from('sale_items')
-    .select('product_name, quantity, subtotal, cost_price')
-    .gte('created_at', monthStart)
+    const sales = (salesRaw ?? []) as any[]
+    const items = (itemsRaw ?? []) as any[]
 
-  const productMap = (topItems ?? []).reduce((acc, item) => {
-    if (!acc[item.product_name]) acc[item.product_name] = { qty: 0, revenue: 0, cost: 0 }
-    acc[item.product_name].qty += item.quantity
-    acc[item.product_name].revenue += item.subtotal
-    acc[item.product_name].cost += item.cost_price * item.quantity
-    return acc
-  }, {} as Record<string, { qty: number; revenue: number; cost: number }>)
+    // Agrupar vendas por dia
+    const dayMap: Record<string, any> = {}
+    for (const s of sales) {
+      const d = s.created_at.slice(0, 10)
+      if (!dayMap[d]) dayMap[d] = { count: 0, total: 0, dinheiro: 0, pix: 0, debito: 0, credito: 0, fiado: 0, desconto: 0 }
+      dayMap[d].count++
+      dayMap[d].total += s.total
+      dayMap[d][s.payment_method] = (dayMap[d][s.payment_method] || 0) + s.total
+      dayMap[d].desconto += s.discount ?? 0
+    }
+    const salesByDay = Object.entries(dayMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, v]) => ({ date, ...(v as any) })) as any[]
 
-  const topProducts = Object.entries(productMap)
-    .sort(([, a], [, b]) => b.revenue - a.revenue)
-    .slice(0, 10)
+    const totalMes: number = sales.reduce((s: number, r: any) => s + r.total, 0)
+    const qtdVendas = sales.length
+    const ticketMedio: number = qtdVendas > 0 ? totalMes / qtdVendas : 0
+    const totalDesconto: number = sales.reduce((s: number, r: any) => s + (r.discount ?? 0), 0)
 
-  // Lucro estimado
-  const lucroEstimado = Object.values(productMap).reduce((sum, p) => sum + (p.revenue - p.cost), 0)
+    const byPayment: Record<string, number> = {}
+    for (const s of sales) byPayment[s.payment_method] = (byPayment[s.payment_method] ?? 0) + s.total
 
-  // Clientes inadimplentes
-  const { data: debtors } = await supabase
-    .from('customers')
-    .select('name, current_debt, credit_limit, phone')
-    .gt('current_debt', 0)
-    .order('current_debt', { ascending: false })
-    .limit(10)
+    const prodMap: Record<string, { qty: number; revenue: number; cost: number }> = {}
+    for (const it of items) {
+      if (!prodMap[it.product_name]) prodMap[it.product_name] = { qty: 0, revenue: 0, cost: 0 }
+      prodMap[it.product_name].qty += it.quantity
+      prodMap[it.product_name].revenue += it.subtotal
+      prodMap[it.product_name].cost += it.cost_price * it.quantity
+    }
+    const topProducts = (Object.entries(prodMap) as [string, { qty: number; revenue: number; cost: number }][])
+      .sort(([, a], [, b]) => b.revenue - a.revenue)
+      .slice(0, 10)
 
-  const totalInadimplente = (debtors ?? []).reduce((sum, c) => sum + c.current_debt, 0)
+    const lucroEstimado: number = Object.values(prodMap).reduce((s: number, p: any) => s + (p.revenue - p.cost), 0)
+    const margemPct: number = totalMes > 0 ? (lucroEstimado / totalMes) * 100 : 0
 
-  // Estoque baixo
-  const { data: lowStock } = await supabase
-    .from('products_with_margin')
-    .select('name, stock_qty, min_stock, unit, cost_price')
-    .eq('low_stock', true)
-    .eq('active', true)
-    .order('stock_qty')
+    vendasData = { salesByDay, totalMes, qtdVendas, ticketMedio, lucroEstimado, margemPct, totalDesconto, byPayment, topProducts }
+  }
+
+  if (tipo === "financeiro") {
+    const [{ data: pagarRaw }, { data: receberRaw }] = await Promise.all([
+      (() => {
+        let q = supabase.from("accounts_payable").select("*, supplier:suppliers(trade_name)")
+        if (de) q = q.gte("due_date", de) as typeof q
+        if (ate) q = q.lte("due_date", ate) as typeof q
+        return q.order("due_date")
+      })(),
+      (() => {
+        let q = supabase.from("accounts_receivable").select("*, customer:customers(name)")
+        if (de) q = q.gte("due_date", de) as typeof q
+        if (ate) q = q.lte("due_date", ate) as typeof q
+        return q.order("due_date")
+      })(),
+    ])
+
+    const pagar = (pagarRaw ?? []) as any[]
+    const receber = (receberRaw ?? []) as any[]
+
+    const pagarPendente: number = pagar.filter((a: any) => a.status === "pendente").reduce((s: number, a: any) => s + a.amount, 0)
+    const pagarVencido: number = pagar.filter((a: any) => a.status === "vencido").reduce((s: number, a: any) => s + a.amount, 0)
+    const receberPendente: number = receber.filter((a: any) => a.status === "pendente").reduce((s: number, a: any) => s + (a.amount - a.paid_amount), 0)
+    const receberVencido: number = receber.filter((a: any) => a.status === "vencido").reduce((s: number, a: any) => s + (a.amount - a.paid_amount), 0)
+
+    financeiroData = { pagar, receber, pagarPendente, pagarVencido, receberPendente, receberVencido }
+  }
+
+  if (tipo === "estoque") {
+    const { data: prodsRaw } = await supabase
+      .from("products_with_margin")
+      .select("*")
+      .eq("active", true)
+      .order("name")
+
+    const prods = (prodsRaw ?? []) as any[]
+    const totalValue: number = prods.reduce((s: number, p: any) => s + p.cost_price * p.stock_qty, 0)
+    const lowStockCount = prods.filter((p: any) => p.low_stock).length
+    const zeroStockCount = prods.filter((p: any) => p.stock_qty <= 0).length
+
+    estoqueData = { products: prods, totalValue, lowStockCount, zeroStockCount }
+  }
 
   return (
-    <div>
-      <PageHeader
-        title="Relatórios"
-        description={`Período: ${format(today, 'MMMM yyyy', { locale: ptBR })}`}
-      />
-
-      {/* KPIs do mês */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <DollarSign size={16} className="text-green-600" />
-            <p className="text-sm text-gray-500">Faturamento Mês</p>
-          </div>
-          <p className="text-2xl font-bold text-green-700">{formatCurrency(totalMes)}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp size={16} className="text-blue-600" />
-            <p className="text-sm text-gray-500">Lucro Estimado</p>
-          </div>
-          <p className="text-2xl font-bold text-blue-700">{formatCurrency(lucroEstimado)}</p>
-          <p className="text-xs text-gray-400">
-            {totalMes > 0 ? ((lucroEstimado / totalMes) * 100).toFixed(1) : 0}% de margem
-          </p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Users size={16} className="text-red-500" />
-            <p className="text-sm text-gray-500">Fiado em Aberto</p>
-          </div>
-          <p className="text-2xl font-bold text-red-600">{formatCurrency(totalInadimplente)}</p>
-          <p className="text-xs text-gray-400">{(debtors ?? []).length} cliente(s)</p>
-        </div>
-        <div className="bg-amber-50 rounded-xl border border-amber-100 shadow-sm p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <BarChart3 size={16} className="text-amber-600" />
-            <p className="text-sm text-amber-600">Estoque Baixo</p>
-          </div>
-          <p className="text-2xl font-bold text-amber-700">{(lowStock ?? []).length}</p>
-          <p className="text-xs text-amber-500">produto(s)</p>
-        </div>
-      </div>
-
-      {/* Vendas por forma de pagamento */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-4">
-        <h3 className="font-semibold text-gray-800 mb-4">Faturamento por Forma de Pagamento</h3>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          {['dinheiro', 'pix', 'debito', 'credito', 'fiado'].map(method => {
-            const value = byPayment[method] ?? 0
-            const pct = totalMes > 0 ? (value / totalMes) * 100 : 0
-            return (
-              <div key={method} className="text-center p-3 bg-gray-50 rounded-xl">
-                <p className="text-xs text-gray-500 mb-1">{paymentLabel(method)}</p>
-                <p className="font-bold text-gray-800">{formatCurrency(value)}</p>
-                <div className="mt-2 h-1.5 bg-gray-200 rounded-full">
-                  <div className="h-1.5 bg-green-500 rounded-full" style={{ width: `${pct}%` }} />
-                </div>
-                <p className="text-xs text-gray-400 mt-1">{pct.toFixed(1)}%</p>
-              </div>
-            )
-          })}
-        </div>
-        <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
-          <div className="text-sm text-gray-500">
-            Descontos concedidos: <span className="font-semibold text-red-500">{formatCurrency(totalDesconto)}</span>
-          </div>
-          <div className="text-right">
-            <span className="text-sm text-gray-500 mr-2">Total faturado:</span>
-            <span className="text-xl font-bold text-green-700">{formatCurrency(totalMes)}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Top Produtos */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <BarChart3 size={18} className="text-blue-600" />
-            Top 10 Produtos — Receita do Mês
-          </h3>
-          {topProducts.length === 0 ? (
-            <p className="text-gray-400 text-sm text-center py-6">Sem vendas no período</p>
-          ) : (
-            <div className="space-y-3">
-              {topProducts.map(([name, data], i) => {
-                const pct = (data.revenue / topProducts[0][1].revenue) * 100
-                return (
-                  <div key={name} className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-gray-400 w-5 flex-shrink-0">#{i + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="font-medium text-gray-700 truncate">{name}</span>
-                        <span className="font-bold text-gray-800 ml-2 flex-shrink-0">{formatCurrency(data.revenue)}</span>
-                      </div>
-                      <div className="h-1.5 bg-gray-100 rounded-full">
-                        <div className="h-1.5 bg-blue-500 rounded-full" style={{ width: `${pct}%` }} />
-                      </div>
-                      <p className="text-xs text-gray-400 mt-0.5">{data.qty.toFixed(0)} un • lucro: {formatCurrency(data.revenue - data.cost)}</p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-4">
-          {/* Clientes com Fiado */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <TrendingUp size={18} className="text-red-500" />
-              Clientes com Fiado em Aberto
-            </h3>
-            {(debtors ?? []).length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-4">Nenhum cliente inadimplente ✅</p>
-            ) : (
-              <div className="space-y-2">
-                {(debtors ?? []).map(c => (
-                  <div key={c.name} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-bold text-xs">
-                        {c.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">{c.name}</p>
-                        {c.phone && <p className="text-xs text-gray-400">{c.phone}</p>}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-red-600 text-sm">{formatCurrency(c.current_debt)}</p>
-                      <p className="text-xs text-gray-400">limite: {formatCurrency(c.credit_limit)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Estoque Baixo */}
-          {(lowStock ?? []).length > 0 && (
-            <div className="bg-amber-50 rounded-xl border border-amber-100 p-5">
-              <h3 className="font-semibold text-amber-700 mb-3 text-sm">Produtos com Estoque Baixo</h3>
-              <div className="space-y-1.5">
-                {(lowStock ?? []).slice(0, 8).map(p => (
-                  <div key={p.name} className="flex justify-between text-xs">
-                    <span className="text-gray-700 truncate max-w-[160px]">{p.name}</span>
-                    <span className="text-amber-700 font-semibold ml-2">
-                      {p.stock_qty} / {p.min_stock} {p.unit}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+    <RelatoriosClient
+      tipo={tipo}
+      de={de}
+      ate={ate}
+      vendasData={vendasData}
+      financeiroData={financeiroData}
+      estoqueData={estoqueData}
+    />
   )
 }

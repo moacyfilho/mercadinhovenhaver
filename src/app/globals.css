@@ -73,3 +73,44 @@
   background: #94a3b8;
   border-radius: 3px;
 }
+
+/* ===== ESTILOS DE IMPRESSÃO (PDF) ===== */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    background: white !important;
+    font-size: 12px;
+  }
+
+  /* Ocultar elementos de navegação */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Garantir que o conteúdo principal use largura total */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Cards e tabelas */
+  .rounded-xl, .rounded-lg {
+    border-radius: 6px !important;
+  }
+
+  /* Quebra de página */
+  .page-break-before {
+    page-break-before: always;
+  }
+
+  /* Ocultar sombras */
+  .shadow-sm, .shadow-md {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+  }
+}

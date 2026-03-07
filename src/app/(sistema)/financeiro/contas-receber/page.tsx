@@ -65,7 +65,7 @@ export default async function ContasReceberPage() {
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-500">{formatDate(a.due_date)}</td>
                   <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
-                  <td className="px-4 py-3"><ContaReceberActions account={a} /></td>
+                  <td className="px-4 py-3"><ContaReceberActions account={a as any} /></td>
                 </tr>
               ))}
               {(accounts ?? []).length === 0 && (
