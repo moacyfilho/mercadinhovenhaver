@@ -33,7 +33,7 @@ export function PdvClient({ cashRegister: initialCashRegister, products }: Props
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [selectedQty, setSelectedQty] = useState(1)
-  const [now, setNow] = useState(new Date())
+  const [now, setNow] = useState<Date | null>(null)
 
   // Edição de item (inline)
   const [editingItem, setEditingItem] = useState<string | null>(null)
@@ -42,6 +42,8 @@ export function PdvClient({ cashRegister: initialCashRegister, products }: Props
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   useEffect(() => {
+    setNow(new Date())
+    const clock = setInterval(() => setNow(new Date()), 1000)
     setSidebarCollapsed(localStorage.getItem('sidebar-collapsed') === 'true')
     const onStorage = (e: StorageEvent) => {
       if (e.key === 'sidebar-collapsed') setSidebarCollapsed(e.newValue === 'true')
@@ -52,6 +54,7 @@ export function PdvClient({ cashRegister: initialCashRegister, products }: Props
     return () => {
       window.removeEventListener('storage', onStorage)
       window.removeEventListener('sidebar-collapse', onCollapse)
+      clearInterval(clock)
     }
   }, [])
 
@@ -241,7 +244,9 @@ export function PdvClient({ cashRegister: initialCashRegister, products }: Props
 
   const totalItems = items.reduce((s, i) => s + i.quantity, 0)
 
-  const nowStr = now.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  const nowStr = now
+    ? now.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    : ''
 
   return (
     <div className={`fixed inset-0 top-0 bg-[#1a2744] flex flex-col overflow-hidden transition-all duration-300 ${fullscreen ? 'left-0' : sidebarCollapsed ? 'lg:left-14' : 'lg:left-64'}`} style={{ zIndex: fullscreen ? 40 : 10 }}>
