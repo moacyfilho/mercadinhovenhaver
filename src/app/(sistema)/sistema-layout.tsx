@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Navbar } from '@/components/layout/navbar'
 import type { Profile } from '@/types/database'
@@ -15,16 +15,32 @@ export function SistemaLayout({
   lowStockCount?: number
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
+
+  // Persistir estado no localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebar-collapsed')
+    if (saved === 'true') setCollapsed(true)
+  }, [])
+
+  function handleToggleCollapse() {
+    const next = !collapsed
+    setCollapsed(next)
+    localStorage.setItem('sidebar-collapsed', String(next))
+  }
+
+  const sidebarWidth = collapsed ? 'lg:pl-14' : 'lg:pl-64'
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        collapsed={collapsed}
+        onToggleCollapse={handleToggleCollapse}
         lowStockCount={lowStockCount}
       />
-      {/* lg:pl-64 dá espaço para o sidebar fixo no desktop */}
-      <div className="flex-1 flex flex-col overflow-hidden lg:pl-64">
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${sidebarWidth}`}>
         <Navbar
           profile={profile}
           onMenuClick={() => setSidebarOpen(true)}
