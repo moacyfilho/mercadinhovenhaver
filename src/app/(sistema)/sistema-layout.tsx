@@ -27,6 +27,7 @@ export function SistemaLayout({
     const next = !collapsed
     setCollapsed(next)
     localStorage.setItem('sidebar-collapsed', String(next))
+    window.dispatchEvent(new CustomEvent('sidebar-collapse', { detail: next }))
   }
 
   const sidebarWidth = collapsed ? 'lg:pl-14' : 'lg:pl-64'

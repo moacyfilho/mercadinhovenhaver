@@ -39,6 +39,21 @@ export function PdvClient({ cashRegister: initialCashRegister, products }: Props
   const [editingItem, setEditingItem] = useState<string | null>(null)
   const [editQty, setEditQty] = useState('')
   const [fullscreen, setFullscreen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  useEffect(() => {
+    setSidebarCollapsed(localStorage.getItem('sidebar-collapsed') === 'true')
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'sidebar-collapsed') setSidebarCollapsed(e.newValue === 'true')
+    }
+    const onCollapse = (e: Event) => setSidebarCollapsed((e as CustomEvent).detail as boolean)
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('sidebar-collapse', onCollapse)
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('sidebar-collapse', onCollapse)
+    }
+  }, [])
 
   // Item selecionado na tabela
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null)
@@ -229,7 +244,7 @@ export function PdvClient({ cashRegister: initialCashRegister, products }: Props
   const nowStr = now.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })
 
   return (
-    <div className={`fixed inset-0 top-0 bg-[#1a2744] flex flex-col overflow-hidden transition-all duration-300 ${fullscreen ? 'left-0' : 'lg:left-64'}`} style={{ zIndex: fullscreen ? 40 : 10 }}>
+    <div className={`fixed inset-0 top-0 bg-[#1a2744] flex flex-col overflow-hidden transition-all duration-300 ${fullscreen ? 'left-0' : sidebarCollapsed ? 'lg:left-14' : 'lg:left-64'}`} style={{ zIndex: fullscreen ? 40 : 10 }}>
 
       {/* ── Barra superior ── */}
       <div className="bg-[#0e1b35] text-white flex items-stretch text-xs shrink-0 border-b border-[#2a3a5c]">
