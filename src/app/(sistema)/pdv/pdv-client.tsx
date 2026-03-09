@@ -160,9 +160,12 @@ export function PdvClient({ cashRegister: initialCashRegister, products }: Props
     })
     if (error) { toast.error('Erro ao registrar movimento'); setMovLoading(false); return }
     const field = movModal!.type === 'sangria' ? 'total_sangria' : 'total_suprimento'
+    const newTotal = ((cashRegister as any)[field] ?? 0) + amount
     await (supabase as any).from('cash_registers')
-      .update({ [field]: (cashRegister as any)[field] ?? 0 + amount })
+      .update({ [field]: newTotal })
       .eq('id', cashRegister.id)
+    // Atualiza o estado local para refletir no display
+    setCashRegister(prev => prev ? { ...prev, [field]: newTotal } as any : prev)
     toast.success(movModal!.type === 'sangria' ? 'Sangria registrada!' : 'Suprimento registrado!')
     setMovModal(null)
     setMovLoading(false)
@@ -297,7 +300,11 @@ export function PdvClient({ cashRegister: initialCashRegister, products }: Props
           </span>
         </div>
         {cashRegister && (
-          <span className="text-gray-400">Fundo: {formatCurrency(cashRegister.initial_balance)}</span>
+          <span className="text-gray-400">Fundo: {formatCurrency(
+            (cashRegister.initial_balance ?? 0)
+            + ((cashRegister as any).total_suprimento ?? 0)
+            - ((cashRegister as any).total_sangria ?? 0)
+          )}</span>
         )}
         <div className="flex-1" />
         <button
