@@ -43,29 +43,29 @@ export default async function ContasReceberPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50">
-                <th className="px-4 py-3">Descrição</th>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3 text-right">Valor</th>
-                <th className="px-4 py-3 text-right">Pago</th>
-                <th className="px-4 py-3 text-right">Saldo</th>
-                <th className="px-4 py-3">Vencimento</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Ação</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Descrição</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Cliente</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3 text-right">Valor</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3 text-right">Pago</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3 text-right">Saldo</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Vencimento</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Status</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {(accounts ?? []).map(a => (
                 <tr key={a.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-800">{a.description}</td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{(a.customer as any)?.name ?? '-'}</td>
-                  <td className="px-4 py-3 text-right text-gray-600">{formatCurrency(a.amount)}</td>
-                  <td className="px-4 py-3 text-right text-green-600 font-medium">{formatCurrency(a.paid_amount)}</td>
-                  <td className="px-4 py-3 text-right font-bold text-gray-800">
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 font-medium text-gray-800">{a.description}</td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-gray-500 text-xs">{(a.customer as any)?.name ?? '-'}</td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-right text-gray-600">{formatCurrency(a.amount)}</td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-right text-green-600 font-medium">{formatCurrency(a.paid_amount)}</td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-right font-bold text-gray-800">
                     {formatCurrency(a.amount - a.paid_amount)}
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-500">{formatDate(a.due_date)}</td>
-                  <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
-                  <td className="px-4 py-3"><ContaReceberActions account={a as any} /></td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-xs text-gray-500">{formatDate(a.due_date)}</td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3"><StatusBadge status={a.status} /></td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3"><ContaReceberActions account={a as any} /></td>
                 </tr>
               ))}
               {(accounts ?? []).length === 0 && (

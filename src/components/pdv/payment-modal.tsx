@@ -6,7 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import { usePdvStore } from '@/lib/stores/pdv-store'
 import { toast } from 'sonner'
 import { formatCurrency, paymentLabel } from '@/lib/utils'
-import { X, Check, DollarSign, CreditCard, Smartphone, BookOpen, Search } from 'lucide-react'
+import { X, Check, DollarSign, CreditCard, Smartphone, BookOpen, Search, CheckCircle, FileText } from 'lucide-react'
+import { NfceModal } from './nfce-modal'
 import type { PaymentMethod, Customer } from '@/types/database'
 
 const PAYMENT_METHODS: { method: PaymentMethod; label: string; icon: typeof DollarSign }[] = [
@@ -34,6 +35,10 @@ export function PaymentModal({ open, onClose }: Props) {
   const [loading, setLoading] = useState(false)
   const [customerSearch, setCustomerSearch] = useState('')
   const [customerResults, setCustomerResults] = useState<Customer[]>([])
+  const [saleResult, setSaleResult] = useState<{
+    saleId: string; saleNumber: number; total: number; changeAmount: number; items: typeof items
+  } | null>(null)
+  const [nfceOpen, setNfceOpen] = useState(false)
 
   if (!open) return null
 
@@ -128,11 +133,77 @@ export function PaymentModal({ open, onClose }: Props) {
       await supabase.from('cash_registers').update(updates).eq('id', cashRegisterId)
     }
 
-    toast.success(`Venda #${sale.sale_number} finalizada!`)
+    const saleTotal = total()
+    const changeAmt = paymentMethod === 'dinheiro' ? change() : 0
+    setSaleResult({
+      saleId: sale.id,
+      saleNumber: sale.sale_number,
+      total: saleTotal,
+      changeAmount: changeAmt,
+      items: [...items],
+    })
+    setLoading(false)
+  }
+
+  function handleCloseSuccess() {
+    setSaleResult(null)
+    setNfceOpen(false)
     clearCart()
     onClose()
     router.refresh()
-    setLoading(false)
+  }
+
+  // Tela de sucesso após venda
+  if (saleResult) {
+    return (
+      <>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+            <CheckCircle size={52} className="text-green-500 mx-auto mb-3" />
+            <h2 className="text-xl font-bold text-gray-800">Venda Finalizada!</h2>
+            <p className="text-gray-500 text-sm mt-1">Venda #{saleResult.saleNumber}</p>
+            <div className="my-4 bg-green-50 rounded-xl p-4">
+              <p className="text-3xl font-bold text-green-700">{formatCurrency(saleResult.total)}</p>
+              {saleResult.changeAmount > 0 && (
+                <p className="text-sm text-gray-600 mt-1">Troco: <strong>{formatCurrency(saleResult.changeAmount)}</strong></p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <button
+                onClick={() => setNfceOpen(true)}
+                className="w-full flex items-center justify-center gap-2 border-2 border-green-700 text-green-700 hover:bg-green-50 py-3 rounded-xl text-sm font-bold transition-colors"
+              >
+                <FileText size={16} />
+                Emitir NFC-e
+              </button>
+              <button
+                onClick={handleCloseSuccess}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl text-sm font-medium transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+        <NfceModal
+          open={nfceOpen}
+          onClose={() => { setNfceOpen(false); handleCloseSuccess() }}
+          saleResult={{
+            saleId: saleResult.saleId,
+            saleNumber: saleResult.saleNumber,
+            total: saleResult.total,
+            changeAmount: saleResult.changeAmount,
+            items: saleResult.items.map(i => ({
+              product_name: i.product.name,
+              quantity: i.quantity,
+              unit_price: i.unit_price,
+              subtotal: i.subtotal,
+              product: i.product,
+            })),
+          }}
+        />
+      </>
+    )
   }
 
   return (

@@ -24,26 +24,26 @@ export default async function FornecedoresPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50">
-                <th className="px-4 py-3">Fornecedor</th>
-                <th className="px-4 py-3">CNPJ/CPF</th>
-                <th className="px-4 py-3">Telefone</th>
-                <th className="px-4 py-3">Contato</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Ações</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Fornecedor</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">CNPJ/CPF</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Telefone</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Contato</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Email</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {(suppliers ?? []).map(s => (
                 <tr key={s.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-2 sm:px-4 sm:py-3">
                     <p className="font-medium text-gray-800">{s.trade_name}</p>
                     {s.company_name && <p className="text-xs text-gray-400">{s.company_name}</p>}
                   </td>
-                  <td className="px-4 py-3 text-gray-500 font-mono text-xs">{s.document ?? '-'}</td>
-                  <td className="px-4 py-3 text-gray-600">{s.phone ?? s.whatsapp ?? '-'}</td>
-                  <td className="px-4 py-3 text-gray-600">{s.contact_name ?? '-'}</td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{s.email ?? '-'}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-gray-500 font-mono text-xs">{s.document ?? '-'}</td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-gray-600">{s.phone ?? s.whatsapp ?? '-'}</td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-gray-600">{s.contact_name ?? '-'}</td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-gray-500 text-xs">{s.email ?? '-'}</td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3">
                     <Link href={`/fornecedores/${s.id}`}
                       className="text-blue-600 hover:underline text-xs font-medium">
                       Ver / Editar
@@ -61,7 +61,7 @@ export default async function FornecedoresPage() {
             </tbody>
           </table>
         </div>
-        <div className="px-4 py-3 border-t border-gray-100 text-xs text-gray-400">
+        <div className="px-3 py-2 sm:px-4 sm:py-3 border-t border-gray-100 text-xs text-gray-400">
           {(suppliers ?? []).length} fornecedor(es)
         </div>
       </div>

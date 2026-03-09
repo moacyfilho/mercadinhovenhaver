@@ -38,7 +38,14 @@ const menu = [
     ],
   },
   { href: '/relatorios', label: 'Relatórios', icon: BarChart3 },
-  { href: '/configuracoes/loja', label: 'Configurações', icon: Settings },
+  {
+    label: 'Configurações',
+    icon: Settings,
+    children: [
+      { href: '/configuracoes/loja', label: 'Dados da Loja' },
+      { href: '/configuracoes/fiscal', label: 'Dados Fiscais (NFC-e)' },
+    ],
+  },
 ]
 
 interface SidebarProps {

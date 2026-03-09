@@ -70,19 +70,19 @@ export default async function EstoquePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50">
-                <th className="px-4 py-3">Produto</th>
-                <th className="px-4 py-3">Categoria</th>
-                <th className="px-4 py-3 text-right">Estoque</th>
-                <th className="px-4 py-3 text-right">Mínimo</th>
-                <th className="px-4 py-3 text-right">Custo Unit.</th>
-                <th className="px-4 py-3 text-right">Valor Total</th>
-                <th className="px-4 py-3">Situação</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Produto</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Categoria</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3 text-right">Estoque</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3 text-right">Mínimo</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3 text-right">Custo Unit.</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3 text-right">Valor Total</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Situação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {(products ?? []).map(p => (
                 <tr key={p.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-2 sm:px-4 sm:py-3">
                     <div className="flex items-center gap-2">
                       {p.low_stock && <AlertTriangle size={14} className="text-amber-500" />}
                       <div>
@@ -91,18 +91,18 @@ export default async function EstoquePage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{p.category_name ?? '-'}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-gray-500">{p.category_name ?? '-'}</td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-right">
                     <span className={p.low_stock ? 'text-red-600 font-bold' : 'text-gray-700'}>
                       {p.stock_qty} {p.unit}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-500">{p.min_stock} {p.unit}</td>
-                  <td className="px-4 py-3 text-right text-gray-600">{formatCurrency(p.cost_price)}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-gray-800">
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-right text-gray-500">{p.min_stock} {p.unit}</td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-right text-gray-600">{formatCurrency(p.cost_price)}</td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-right font-semibold text-gray-800">
                     {formatCurrency(p.cost_price * p.stock_qty)}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-2 sm:px-4 sm:py-3">
                     <StatusBadge status={p.low_stock ? 'vencido' : 'ativo'} />
                   </td>
                 </tr>

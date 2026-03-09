@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { formatCurrency, calcMargin } from '@/lib/utils'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import type { Product, Category, Brand } from '@/types/database'
 
 const UNITS = ['un', 'kg', 'g', 'l', 'ml', 'cx', 'pct', 'dz'] as const
@@ -21,6 +22,7 @@ export function ProductForm({ product, categories, brands }: Props) {
   const isNew = !product
 
   const [loading, setLoading] = useState(false)
+  const [fiscalOpen, setFiscalOpen] = useState(false)
   const [form, setForm] = useState({
     name: product?.name ?? '',
     sku: product?.sku ?? '',
@@ -35,6 +37,17 @@ export function ProductForm({ product, categories, brands }: Props) {
     expiry_date: product?.expiry_date ?? '',
     description: product?.description ?? '',
     active: product?.active ?? true,
+    // Fiscal
+    ncm: product?.ncm ?? '',
+    cfop: product?.cfop ?? '5102',
+    cest: product?.cest ?? '',
+    origem: product?.origem ?? 0,
+    icms_cst: product?.icms_cst ?? '',
+    icms_percent: product?.icms_percent ?? 0,
+    pis_cst: product?.pis_cst ?? '07',
+    pis_percent: product?.pis_percent ?? 0,
+    cofins_cst: product?.cofins_cst ?? '07',
+    cofins_percent: product?.cofins_percent ?? 0,
   })
 
   const margin = calcMargin(form.cost_price, form.sale_price)
@@ -57,6 +70,12 @@ export function ProductForm({ product, categories, brands }: Props) {
       sku: form.sku || null,
       barcode: form.barcode || null,
       expiry_date: form.expiry_date || null,
+      ncm: form.ncm || null,
+      cfop: form.cfop || null,
+      cest: form.cest || null,
+      icms_cst: form.icms_cst || null,
+      pis_cst: form.pis_cst || null,
+      cofins_cst: form.cofins_cst || null,
     }
 
     const { error } = isNew
@@ -183,6 +202,133 @@ export function ProductForm({ product, categories, brands }: Props) {
             />
           </div>
         </div>
+      </div>
+
+      {/* Dados Fiscais */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setFiscalOpen(v => !v)}
+          className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+        >
+          <div>
+            <h2 className="text-base font-semibold text-gray-800">Dados Fiscais (NFC-e)</h2>
+            <p className="text-xs text-gray-500 mt-0.5">NCM, CFOP, PIS, COFINS, ICMS — necessário para emissão de nota fiscal</p>
+          </div>
+          {fiscalOpen ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+        </button>
+
+        {fiscalOpen && (
+          <div className="px-6 pb-6 border-t border-gray-50">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">NCM <span className="text-gray-400 font-normal">(8 dígitos)</span></label>
+                <input
+                  value={form.ncm}
+                  onChange={e => set('ncm', e.target.value.replace(/\D/g, '').slice(0, 8))}
+                  className="input-field w-full font-mono"
+                  placeholder="00000000"
+                  maxLength={8}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CFOP</label>
+                <input
+                  value={form.cfop}
+                  onChange={e => set('cfop', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  className="input-field w-full font-mono"
+                  placeholder="5102"
+                  maxLength={4}
+                />
+                <p className="text-xs text-gray-400 mt-0.5">5102 = venda de mercadoria</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CEST <span className="text-gray-400 font-normal">(opcional)</span></label>
+                <input
+                  value={form.cest}
+                  onChange={e => set('cest', e.target.value.replace(/\D/g, '').slice(0, 7))}
+                  className="input-field w-full font-mono"
+                  placeholder="0000000"
+                  maxLength={7}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Origem da mercadoria</label>
+                <select value={form.origem} onChange={e => set('origem', parseInt(e.target.value))} className="input-field w-full">
+                  <option value={0}>0 — Nacional</option>
+                  <option value={1}>1 — Estrangeira (importação direta)</option>
+                  <option value={2}>2 — Estrangeira (adquirida no mercado interno)</option>
+                  <option value={3}>3 — Nacional com mais de 40% de conteúdo estrangeiro</option>
+                  <option value={4}>4 — Nacional (prod. básicos)</option>
+                  <option value={5}>5 — Nacional com até 40% de conteúdo estrangeiro</option>
+                  <option value={6}>6 — Estrangeira (importação direta, sem similar nacional)</option>
+                  <option value={7}>7 — Estrangeira (mercado interno, sem similar nacional)</option>
+                  <option value={8}>8 — Nacional com 70%+ de conteúdo estrangeiro</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">ICMS CST/CSOSN</label>
+                <input
+                  value={form.icms_cst}
+                  onChange={e => set('icms_cst', e.target.value.slice(0, 3))}
+                  className="input-field w-full font-mono"
+                  placeholder="400 ou 102"
+                  maxLength={3}
+                />
+                <p className="text-xs text-gray-400 mt-0.5">400=Simples / 00=Normal</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Alíquota ICMS (%)</label>
+                <input
+                  type="number" step="0.01" min="0" max="100"
+                  value={form.icms_percent}
+                  onChange={e => set('icms_percent', parseFloat(e.target.value) || 0)}
+                  className="input-field w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">PIS CST</label>
+                <input
+                  value={form.pis_cst}
+                  onChange={e => set('pis_cst', e.target.value.replace(/\D/g, '').slice(0, 2))}
+                  className="input-field w-full font-mono"
+                  placeholder="07"
+                  maxLength={2}
+                />
+                <p className="text-xs text-gray-400 mt-0.5">07=Simples Nacional</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Alíquota PIS (%)</label>
+                <input
+                  type="number" step="0.01" min="0" max="100"
+                  value={form.pis_percent}
+                  onChange={e => set('pis_percent', parseFloat(e.target.value) || 0)}
+                  className="input-field w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">COFINS CST</label>
+                <input
+                  value={form.cofins_cst}
+                  onChange={e => set('cofins_cst', e.target.value.replace(/\D/g, '').slice(0, 2))}
+                  className="input-field w-full font-mono"
+                  placeholder="07"
+                  maxLength={2}
+                />
+                <p className="text-xs text-gray-400 mt-0.5">07=Simples Nacional</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Alíquota COFINS (%)</label>
+                <input
+                  type="number" step="0.01" min="0" max="100"
+                  value={form.cofins_percent}
+                  onChange={e => set('cofins_percent', parseFloat(e.target.value) || 0)}
+                  className="input-field w-full"
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Ações */}

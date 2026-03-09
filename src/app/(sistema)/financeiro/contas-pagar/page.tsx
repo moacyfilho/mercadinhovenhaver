@@ -52,25 +52,25 @@ export default async function ContasPagarPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50">
-                    <th className="px-4 py-3">Descrição</th>
-                    <th className="px-4 py-3">Categoria</th>
-                    <th className="px-4 py-3">Fornecedor</th>
-                    <th className="px-4 py-3 text-right">Valor</th>
-                    <th className="px-4 py-3">Vencimento</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Ação</th>
+                    <th className="px-3 py-2 sm:px-4 sm:py-3">Descrição</th>
+                    <th className="px-3 py-2 sm:px-4 sm:py-3">Categoria</th>
+                    <th className="px-3 py-2 sm:px-4 sm:py-3">Fornecedor</th>
+                    <th className="px-3 py-2 sm:px-4 sm:py-3 text-right">Valor</th>
+                    <th className="px-3 py-2 sm:px-4 sm:py-3">Vencimento</th>
+                    <th className="px-3 py-2 sm:px-4 sm:py-3">Status</th>
+                    <th className="px-3 py-2 sm:px-4 sm:py-3">Ação</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {(accounts ?? []).map(a => (
                     <tr key={a.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-gray-800 max-w-[200px] truncate">{a.description}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{a.category}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{(a.supplier as any)?.trade_name ?? '-'}</td>
-                      <td className="px-4 py-3 text-right font-bold text-gray-800">{formatCurrency(a.amount)}</td>
-                      <td className="px-4 py-3 text-xs text-gray-600">{formatDate(a.due_date)}</td>
-                      <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
-                      <td className="px-4 py-3"><ContaPagarActions account={a as any} /></td>
+                      <td className="px-3 py-2 sm:px-4 sm:py-3 font-medium text-gray-800 max-w-[200px] truncate">{a.description}</td>
+                      <td className="px-3 py-2 sm:px-4 sm:py-3 text-xs text-gray-500">{a.category}</td>
+                      <td className="px-3 py-2 sm:px-4 sm:py-3 text-xs text-gray-500">{(a.supplier as any)?.trade_name ?? '-'}</td>
+                      <td className="px-3 py-2 sm:px-4 sm:py-3 text-right font-bold text-gray-800">{formatCurrency(a.amount)}</td>
+                      <td className="px-3 py-2 sm:px-4 sm:py-3 text-xs text-gray-600">{formatDate(a.due_date)}</td>
+                      <td className="px-3 py-2 sm:px-4 sm:py-3"><StatusBadge status={a.status} /></td>
+                      <td className="px-3 py-2 sm:px-4 sm:py-3"><ContaPagarActions account={a as any} /></td>
                     </tr>
                   ))}
                   {(accounts ?? []).length === 0 && (

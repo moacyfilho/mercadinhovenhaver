@@ -98,31 +98,31 @@ export function RelatoriosClient({ tipo, de, ate, vendasData, financeiroData, es
   return (
     <div>
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-5 print:mb-3">
-        <h1 className="text-2xl font-bold text-gray-900">Relatórios</h1>
+      <div className="flex items-center justify-between mb-4 print:mb-3">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Relatórios</h1>
         <button
           onClick={() => window.print()}
-          className="flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors print:hidden"
+          className="flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-lg transition-colors print:hidden"
         >
-          <Printer size={15} /> Exportar PDF
+          <Printer size={14} /> <span className="hidden sm:inline">Exportar</span> PDF
         </button>
       </div>
 
       {/* ── Abas ── */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-5 w-fit print:hidden">
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-4 print:hidden">
         {TABS.map(tab => {
           const Icon = tab.icon
           return (
             <button
               key={tab.id}
               onClick={() => goTo({ tipo: tab.id })}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1.5 px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                 tipo === tab.id
                   ? 'bg-white text-green-700 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              <Icon size={15} />
+              <Icon size={14} />
               {tab.label}
             </button>
           )

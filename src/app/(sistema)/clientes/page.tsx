@@ -42,17 +42,17 @@ export default async function ClientesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50">
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Telefone</th>
-                <th className="px-4 py-3 text-right">Saldo Fiado</th>
-                <th className="px-4 py-3 text-right">Limite</th>
-                <th className="px-4 py-3">Ações</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Cliente</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Telefone</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3 text-right">Saldo Fiado</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3 text-right">Limite</th>
+                <th className="px-3 py-2 sm:px-4 sm:py-3">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {(customers ?? []).map(c => (
                 <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-2 sm:px-4 sm:py-3">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm">
                         {c.name.charAt(0)}
@@ -63,14 +63,14 @@ export default async function ClientesPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{c.phone ?? '-'}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-gray-600">{c.phone ?? '-'}</td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-right">
                     <span className={c.current_debt > 0 ? 'text-red-600 font-bold' : 'text-gray-500'}>
                       {formatCurrency(c.current_debt)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-600">{formatCurrency(c.credit_limit)}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-2 sm:px-4 sm:py-3 text-right text-gray-600">{formatCurrency(c.credit_limit)}</td>
+                  <td className="px-3 py-2 sm:px-4 sm:py-3">
                     <Link href={`/clientes/${c.id}`}
                       className="text-blue-600 hover:underline text-xs font-medium">
                       Ver / Editar

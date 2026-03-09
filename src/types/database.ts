@@ -82,12 +82,45 @@ export interface Product {
   active: boolean
   created_at: string
   updated_at: string
+  // Dados fiscais
+  ncm: string | null
+  cfop: string | null
+  cest: string | null
+  origem: number | null
+  icms_cst: string | null
+  icms_percent: number | null
+  pis_cst: string | null
+  pis_percent: number | null
+  cofins_cst: string | null
+  cofins_percent: number | null
   // Joins
   category_name?: string
   brand_name?: string
   margin_percent?: number
   margin_value?: number
   low_stock?: boolean
+}
+
+export interface CompanyConfig {
+  id: string
+  cnpj: string
+  razao_social: string
+  nome_fantasia: string | null
+  ie: string | null
+  cnae: string | null
+  regime_tributario: number
+  cep: string | null
+  logradouro: string | null
+  numero: string | null
+  complemento: string | null
+  bairro: string | null
+  municipio: string | null
+  uf: string | null
+  codigo_municipio: string | null
+  telefone: string | null
+  email: string | null
+  created_at: string
+  updated_at: string
 }
 
 export interface CashRegister {
@@ -249,6 +282,7 @@ export type Database = {
       accounts_payable: { Row: AccountPayable; Insert: Partial<AccountPayable>; Update: Partial<AccountPayable> }
       accounts_receivable: { Row: AccountReceivable; Insert: Partial<AccountReceivable>; Update: Partial<AccountReceivable> }
       store_settings: { Row: StoreSettings; Insert: Partial<StoreSettings>; Update: Partial<StoreSettings> }
+      company_config: { Row: CompanyConfig; Insert: Partial<CompanyConfig>; Update: Partial<CompanyConfig> }
     }
     Views: {
       products_with_margin: { Row: Product }
