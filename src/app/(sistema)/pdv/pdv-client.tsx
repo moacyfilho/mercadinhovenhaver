@@ -150,11 +150,13 @@ export function PdvClient({ cashRegister: initialCashRegister, products }: Props
     const amount = parseFloat(movAmount)
     if (!amount || amount <= 0) return toast.error('Informe o valor')
     setMovLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
     const { error } = await (supabase as any).from('cash_movements').insert({
       cash_register_id: cashRegister.id,
       type: movModal!.type,
       amount,
       reason: movReason || null,
+      user_id: user?.id ?? null,
     })
     if (error) { toast.error('Erro ao registrar movimento'); setMovLoading(false); return }
     const field = movModal!.type === 'sangria' ? 'total_sangria' : 'total_suprimento'
